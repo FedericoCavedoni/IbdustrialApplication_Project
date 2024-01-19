@@ -4,7 +4,7 @@ import time as Time
 GPIO_LED = 2
 GPIO_HR = 3
 
-def setup(): 
+def setup():
     """ setup function """
     print("setup function")
     GPIO.setmode(GPIO.BCM)
