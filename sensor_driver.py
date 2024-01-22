@@ -14,23 +14,3 @@ class HRDriver:
     def read_sample(self):
         """ return sample value """
         return GPIO.digitalRead(self.gpio_pin)
-
-
-
-def loop():
-    """ loop function """
-    sample = 0
-    old_sample = 0
-    while True:
-        sample = GPIO.digitalRead(GPIO_HR)
-        if( (sample == GPIO.HIGH) and (old_sample != sample )):
-            print("Battito")
-            GPIO.output(GPIO_LED, GPIO.HIGH)
-            Time.sleep(1)
-
-        old_sample = sample
-        GPIO.output(GPIO_LED, GPIO.LOW)
-
-
-setup()
-loop()

@@ -28,7 +28,7 @@ class CommunicationAPI():
             else:
                 return jsonify({'message': 'json handler not defined', "success": False}), 501
             
-        @self.app.route('/threshold_reached', method=["GET"])
+        @self.app.route('/threshold_reached', methods=['GET'])
         def receive_threshold_reached():
             if self.threshold_reached_handler:
                 self.threshold_reached_handler()
@@ -37,11 +37,11 @@ class CommunicationAPI():
     def send_sample(self, target_ip, target_port, json_data):
         """ Sends a JSON to the specified system """
         try:
-            requests.post(
-                f"http://{target_ip}:{target_port}/receive_sample", json=json_data, timeout=30)
+            requests.post("http://{}:{}/receive_sample".format(target_ip, target_port), json=json_data, timeout=30)
         except requests.RequestException as e:
-            print(f"[CommunicationAPI] Send JSON failed: {e}")
+            print("[CommunicationAPI] Send JSON failed: {}".format(e))
 
     def run(self):
         """ runs the service"""
         self.app.run(host="0.0.0.0", port=self.port)
+

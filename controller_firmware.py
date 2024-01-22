@@ -1,47 +1,52 @@
-from flask import Flask, request, jsonify
-import requests
+import RPi.GPIO as GPIO
+import time as Time
+import threading
+from sensor_driver import HRDriver
+from communication_API import CommunicationAPI
 
-class CommunicationAPI():
-    """
-    CommunicationAPI is a web-server designed for handling and routing
-    different types of incoming data such as JSON and files.
-    The single systems can extend this class and use it as API to communicate
-    with other systems according to the pre-defined standard.
-    """
-    def __init__(self, json_handler=None, threshold_reached_handler = None, port=5555):
-        self.app = Flask(__name__, template_folder=None, static_folder=None)
-        self.setup_routes()
-        self.port = port
-        self.json_handler = json_handler
-        self.threshold_reached_handler = threshold_reached_handler
+GPIO_LED = 2
+GPIO_HR = 3
+THRESHOLD_SAMPLE = 250
+hr_driver = HRDriver(GPIO_HR)
 
-    def setup_routes(self):
-        """ Defines routes for the Flask application """
+def receive_sample_result(json_data):
+    """ Handler Classification Result """
+    print("Classificazione battito ricevuta")
 
-        @self.app.route('/receive_sample_result', methods=['POST'])
-        def receive_sample_result():
-            """ Handles the incoming JSON messages"""
-            if self.json_handler:
-                json_data = request.json
-                self.json_handler(json_data)
-                return jsonify({'message': 'json received', "success": True}), 200
-            else:
-                return jsonify({'message': 'json handler not defined', "success": False}), 501
-            
-        @self.app.route('/threshold_reached', methods=['GET'])
-        def receive_threshold_reached():
-            if self.threshold_reached_handler:
-                self.threshold_reached_handler()
-                return jsonify({'message': 'comando ricevuto'}), 200
+def send_new_record():
+    """ Simula il raggiungimento della soglia per l'invio dei sample"""
+    print("Comando threshold ricevuto")
 
-    def send_sample(self, target_ip, target_port, json_data):
-        """ Sends a JSON to the specified system """
-        try:
-            requests.post("http://{}:{}/receive_sample".format(target_ip, target_port), json=json_data, timeout=30)
-        except requests.RequestException as e:
-            print("[CommunicationAPI] Send JSON failed: {}".format(e))
 
-    def run(self):
-        """ runs the service"""
-        self.app.run(host="0.0.0.0", port=self.port)
+def setup():
+    """ setup function """
+    print("setup function")
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    GPIO.setup(GPIO_LED, GPIO.OUT)
+    hr_driver.setup()
+    comm_api = CommunicationAPI(
+        json_handler = receive_sample_result, 
+        threshold_reached_handler = send_new_record)
+    
+    flask_thread = threading.Thread(target=comm_api.run)
+    flask_thread.start()
+    
+    
+def loop():
+    """ loop function """
+    sample = 0
+    old_sample = 0
+    while True:
+        sample = hr_driver.read_sample()
+        if( (sample == GPIO.HIGH) and (old_sample != sample )):
+            print("Battito")
+            GPIO.output(GPIO_LED, GPIO.HIGH)
+            Time.sleep(1)
 
+        old_sample = sample
+        GPIO.output(GPIO_LED, GPIO.LOW)
+
+
+setup()
+loop()
