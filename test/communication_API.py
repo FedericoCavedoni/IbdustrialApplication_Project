@@ -8,11 +8,12 @@ class CommunicationAPI():
     The single systems can extend this class and use it as API to communicate
     with other systems according to the pre-defined standard.
     """
-    def __init__(self, json_handler=None, port=5555):
+    def __init__(self, json_handler=None, threshold_reached_handler = None, port=5555):
         self.app = Flask(__name__, template_folder=None, static_folder=None)
         self.setup_routes()
         self.port = port
         self.json_handler = json_handler
+        self.threshold_reached_handler = threshold_reached_handler
 
     def setup_routes(self):
         """ Defines routes for the Flask application """
@@ -26,6 +27,12 @@ class CommunicationAPI():
                 return jsonify({'message': 'json received', "success": True}), 200
             else:
                 return jsonify({'message': 'json handler not defined', "success": False}), 501
+            
+        @self.app.route('/threshold_reached', method=["GET"])
+        def receive_threshold_reached():
+            if self.threshold_reached_handler:
+                self.threshold_reached_handler()
+                return jsonify({'message': 'comando ricevuto'}), 200
 
     def send_sample(self, target_ip, target_port, json_data):
         """ Sends a JSON to the specified system """
