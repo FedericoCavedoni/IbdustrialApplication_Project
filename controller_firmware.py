@@ -24,14 +24,20 @@ def setup():
 
 def loop():
     """ loop function """
-    sample = 0
-    old_sample = 0
+    #sample = 0
+    #old_sample = 0
     while True:
-        Time.sleep(1000)
+        Time.sleep(1)
         
-        #print("Numero campioni: " + len(hba.timeseries))
-        #rr_intervals = hba.compute_rr_intervals()
-        #print("durata " + hba.get_timeseries_duration())
+        print("Numero campioni: " + str(len(hba.timeseries)))
+        rr_intervals = hba.compute_rr_intervals()
+        if(hba.get_timeseries_duration(rr_intervals) >= hba.timeserires_duration_threshold):
+            with open(TIMESTAMPS_FILE_NAME + '.csv', 'a') as file:
+                for rr_interval in rr_intervals:
+                    file.write(str(rr_interval) + ',' + '\n')
+            print("file scritto ")
+            # Qui va distrutto il vecchio contneuto: chiedi a chat come gestisco in modo corretto un array che viene modificato sia da un interrupt_handler che dal main?
+        
 
         """
         sample = hr_driver.read_sample()

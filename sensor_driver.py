@@ -9,11 +9,10 @@ class HRDriver:
 
     def setup(self):
         """ sensor driver setup """
-        GPIO.setup(self._gpio_pin, GPIO.IN)  # Definiamo quel gpio_pin come pin di Input
-        GPIO.pinMode(self._gpio_pin, GPIO.INPUT_PULLDOWN) # Attiviamo la resistenza interna di PullDown
+        GPIO.setup(self._gpio_pin, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)  # Attivo la resistenza interna di PullDown
 
     def read_sample(self):
-        """ return sample value """
+        """ ritorna il valore digitale letto dal gpio_pin. DA USARE SOLO IN MODALITA' POLLING """
         return GPIO.digitalRead(self._gpio_pin)
     
     def set_interrupt_mode(self, timeseries : [], gpio_event = GPIO.RISING, interrupt_handler = None):
@@ -24,11 +23,11 @@ class HRDriver:
                               callback = self._default_ISR if (interrupt_handler is None) else interrupt_handler,
                               bouncetime=300) # 300 è l'interrivalTime (sovra-stimato) fra 2 battiti consecutivi, ipotizzando un bpm massimo di 220.
     
-    def _default_ISR(self):
+    def _default_ISR(self, channel):
         """ default Interrupt Service Routine per il sampling """
         timestamp = Time.time()
-        print("_default_ISR()" + timestamp)
-        if(self.timeseries):
+        print("_default_ISR()" + str(timestamp))
+        if(self.timeseries is not None):
             self.timeseries.append(timestamp)
         else:
             print("_default_ISR FALSE")

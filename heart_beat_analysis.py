@@ -11,9 +11,11 @@ class heart_beat_analysis:
         self.timeserires_duration_threshold = 60 # Il vettore timeseries conterrà 60 secondi di samples
         self.missing_samples = 0
     
-    def get_timeseries_duration(self):
+    def get_timeseries_duration(self, rr_intervals):
         """ calcola la durata della sessione di campionamento attuale """
-        return sum(self.rr_intervals)
+        _sum = sum(rr_intervals)
+        print("get_timeseries_duration: " + str(_sum))
+        return _sum
 
     # https://github.com/sam-luby/ECG-Pi/blob/master/ecg/pan_tomp.py#L112
     def calculate_bpm(self):
@@ -46,8 +48,10 @@ class heart_beat_analysis:
         print(rmssd)
         return rmssd
 
-
-
+    def deastroy_timeseries(self):
+        """ resettimano i sample """
+        self.timeseries = []
+        self.rr_intervals = []
 
     @staticmethod
     def count_missing_sample(semax_missing_sampleslf, differences : []) :
