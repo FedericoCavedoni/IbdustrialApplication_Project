@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import requests
 
 class CommunicationAPI():
@@ -33,6 +33,11 @@ class CommunicationAPI():
             if self.threshold_reached_handler:
                 self.threshold_reached_handler()
                 return jsonify({'message': 'comando ricevuto'}), 200
+            
+        @self.app.route('/get_rr', methods=['GET'])
+        def get_rr():
+            return send_file("./heart_beat_rr_60.csv", as_attachment=True, attachment_filename="heart_beat_rr_60.csv")
+        
 
     def send_sample(self, target_ip, target_port, json_data):
         """ Sends a JSON to the specified system """

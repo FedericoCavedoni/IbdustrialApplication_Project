@@ -1,11 +1,13 @@
-import RPi.GPIO as GPIO
 import time as Time
+import threading
+import RPi.GPIO as GPIO
 
 class HRDriver:
     """ class driver for the Heart Rate Sensor """
     def __init__(self, gpio_pin):
         self._gpio_pin = gpio_pin
         self.timeseries : [] = None
+        self.timeseries_lock : threading.Lock = None
 
     def setup(self):
         """ sensor driver setup """
@@ -15,9 +17,10 @@ class HRDriver:
         """ ritorna il valore digitale letto dal gpio_pin. DA USARE SOLO IN MODALITA' POLLING """
         return GPIO.digitalRead(self._gpio_pin)
     
-    def set_interrupt_mode(self, timeseries : [], gpio_event = GPIO.RISING, interrupt_handler = None):
+    def set_interrupt_mode(self, timeseries : [] , timeseries_lock, gpio_event = GPIO.RISING, interrupt_handler = None):
         """ la funzione abilita la modalità di gestione ad Interrupt per il sampling """
         self.timeseries = timeseries
+        self.timeseries_lock = timeseries_lock
         GPIO.add_event_detect(self._gpio_pin,
                               gpio_event,
                               callback = self._default_ISR if (interrupt_handler is None) else interrupt_handler,
@@ -27,7 +30,8 @@ class HRDriver:
         """ default Interrupt Service Routine per il sampling """
         timestamp = Time.time()
         print("_default_ISR()" + str(timestamp))
-        if(self.timeseries is not None):
-            self.timeseries.append(timestamp)
-        else:
-            print("_default_ISR FALSE")
+        with self.timeseries_lock:
+            if(self.timeseries is not None):
+                self.timeseries.append(timestamp)
+            else:
+                print("_default_ISR FALSE")
