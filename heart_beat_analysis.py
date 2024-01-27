@@ -5,27 +5,27 @@ TIMESTAMPS_FILE_NAME = "heart_beat_timestamps"
 RR_FILE_NAME = "heart_beat_rr"
 SESSION_DURATION = 60 # Il vettore timeseries conterrà 60 secondi di samples
 MAX_MISSING_SAMPE_FOR_SESSION = 5
+PROF_TEST = True
 
-class HeartBeatAnalysis: 
-    """ Class for the Study of the Heart-beat series """
+class HeartBeatAnalysis:
+    """ Class for the Study of the Heart-beat and the computation of the HRV Scores """
+
     def __init__(self):
         self.timeseries = []
         self.rr_intervals = []
         self.missing_samples = 0
-    
 
     # https://github.com/sam-luby/ECG-Pi/blob/master/ecg/pan_tomp.py#L112
-    def calculate_bpm(self):
-        """ Avendo controllato se ho raggiunto la lunghezza della sessione, mi basta contare quanti sono gli rr-intervals"""
-        bpm = len(self.rr_intervals)
-        return bpm
-    
     def compute_rr_intervals(self):
         """ This function return the differences of every two-consecutive heart-beat-timestamps """
         self.rr_intervals[:] = []   #distrugge il vecchio rrintervals
         for i in range(len(self.timeseries) - 1):
             diff = self.timeseries[i + 1] - self.timeseries[i]
             self.rr_intervals.append(diff)
+
+    def get_average_rrintervals(self):
+        """ ritorna la media degli rr_intervals """
+        return np.average(self.rr_intervals)
 
     def get_session_duration(self):
         """ calcola la durata della sessione di campionamento attuale """
@@ -37,18 +37,6 @@ class HeartBeatAnalysis:
         """ if the in the session has been sampled "#SESSION_DURATION second-samples", then returns True, else False """
         return ( self.get_session_duration() >= SESSION_DURATION )
     
-    def calculate_RMSSD(self, results):
-        """ calculate RMSSD (root mean square of successive differences) """
-        RR_list = results['RR_list']
-        print(RR_list)
-        x = 0
-        for i in range(len(RR_list)-1):
-            x += (RR_list[i+1] - RR_list[i])**2
-        x = x * (1 / (len(RR_list) - 1))
-        rmssd = math.sqrt(x)
-        print(rmssd)
-        return rmssd
-
     def deastroy_timeseries(self):
         """ reset(WITHOUT CHANGING THE REFEENCED OBJECTS) the two arrays. You must NOT do -> self.timeseries[] = [] """
         self.timeseries[:] = []
@@ -68,6 +56,55 @@ class HeartBeatAnalysis:
             for i, rr_interval in enumerate(self.rr_intervals):
                 file.write(str(rr_interval) + (',' if i != _len else ''))
 
-    @staticmethod
-    def count_missing_sample(semax_missing_sampleslf, differences : []) :
+    def compute_bpm(self):
+        """ return the bmp """
+        _session_duration = self.get_session_duration()
+        bpm = ( ( _session_duration / self.get_average_rrintervals() ) 
+               *
+               ( 60 / _session_duration ) )
+        print("bpm(): " + str(bpm))
+        if(PROF_TEST):
+            with open('statistics.csv', 'a') as file:
+                file.write("bpm(): " + str(bpm) + "\n")
+        return bpm
+
+    def compute_rmssd(self):
+        """ calculate the RootMeanSquareSuccessiveDifferences (root mean square of successive differences) """
+        differences = np.diff(self.rr_intervals)
+        squared_differences = differences ** 2
+        mean_squared_differences = squared_differences / (len(differences) - 1 )
+        rmssd = np.sqrt(mean_squared_differences)
+        print("compute_rmssd(): " + str(rmssd))
+        if(PROF_TEST):
+            with open('statistics.csv', 'a') as file:
+                file.write("compute_rmssd(): " + str(rmssd) + "\n")
+        return rmssd
+    
+    def compute_standard_deviation(self):
+        """ return the Standard Deviation of RR_intervals"""
+        sd = np.std(self.rr_intervals)
+        print("compute_sdrr(): " + str(sd))
+        if(PROF_TEST):
+            with open('statistics.csv', 'a') as file:
+                file.write("compute_standard_deviation(): " + str(sd) + "\n")
+        return sd
+    
+    def compute_nn(self, _x_milliseconds = 50):
+        """ return the number of successive intervals that distance more than _x millisecond"""
+        _len = len(self.rr_intervals )
+        NNx = 0
+        for i in range(_len - 1):
+            if (self.rr_intervals[i + 1] - self.rr_intervals[i]) > _x_milliseconds:
+                NNx += 1
+        pNNx = NNx/_len
+        print("compute_nn(): " + str(NNx) + " Percentage: " + str(pNNx))
+        if(PROF_TEST):
+            with open('statistics.csv', 'a') as file:
+                file.write("compute_nn(): " + str(NNx) + "\n")
+                file.write("Percentage(): " + str(pNNx) + "\n")
+        return pNNx
+
+
+    def count_missing_sample(self) :
+        print("DA DEFINIRE")
         return
