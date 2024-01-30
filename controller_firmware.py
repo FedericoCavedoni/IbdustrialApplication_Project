@@ -1,4 +1,4 @@
-import threading
+import threading, json
 import time as Time
 import RPi.GPIO as GPIO
 from sensor_driver import HRDriver
@@ -8,12 +8,13 @@ from neural_network import NeuralNetwork
 
 GPIO_LED = 17
 GPIO_HR = 4
+PC_IP = "192.168.1.181"
+PC_PORT = 5556
 
 timeseries_lock = threading.Lock()
 hr_driver = HRDriver(GPIO_HR)
 hba = HeartBeatAnalysis()
 comm_api : CommunicationAPI = None
-knn = NeuralNetwork()
 
 def setup():
     """ setup function """
@@ -22,6 +23,8 @@ def setup():
 
 def loop():
     """ loop function """
+    global comm_api
+    global hba
     #sample = 0
     #old_sample = 0
     while True:
@@ -36,19 +39,17 @@ def loop():
                 hba.empty_arrays()
             # Features compuation
             hba.write_rrintervals()
-            _bpm = hba.compute_bpm()
-            _rmssd = hba.compute_rmssd()
-            _sd = hba.compute_standard_deviation()
-            _pnn50 = hba.compute_pnn()
-            knn.construct_array_features(bpm = _bpm,
-                                         rr_interval = hba.temp_rr_intervals,
-                                         rmssd = _rmssd,
-                                         sdnn = _sd,
-                                         pnn50 = _pnn50)
-            
 
-            prediction_value = knn.get_prediction()
-            print("Predict_value = " + str(prediction_value))
+            hba.compute_bpm()
+            hba.compute_rmssd()
+            hba.compute_standard_deviation()
+            hba.compute_pnn()
+            
+            comm_api.send_json(PC_IP, PC_PORT, json_data = json.dumps(hba.features))
+
+
+            #prediction_value = knn.get_prediction()
+            #print("Predict_value = " + str(prediction_value))
             
             
             
@@ -66,6 +67,7 @@ def setup_gpio_pins():
 
 def setup_communicationAPI():
     """ setup delle API """
+    global comm_api
     comm_api = CommunicationAPI(
         json_handler = receive_sample_result,
         threshold_reached_handler = send_new_record)

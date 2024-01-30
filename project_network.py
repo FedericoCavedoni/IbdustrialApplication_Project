@@ -9,8 +9,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-from collections import Counter
-from imblearn.over_sampling import SMOTE
 
 annotations_train = ['gamer1-annotations.csv', 'gamer2-annotations.csv', 'gamer3-annotations.csv', 'gamer4-annotations.csv']
 ppg_train = ['gamer1-ppg-2000-01-01.csv', 'gamer1-ppg-2000-01-02.csv','gamer2-ppg-2000-01-01.csv', 'gamer2-ppg-2000-01-02.csv','gamer3-ppg-2000-01-01.csv', 'gamer3-ppg-2000-01-02.csv', 'gamer4-ppg-2000-01-01.csv', 'gamer4-ppg-2000-01-02.csv']
@@ -105,20 +103,6 @@ for i in range(4):
     for line in x:
         x_train.append(line)
     y_train = y_train + y
-
-# Oversample imbalanced dataset with SMOTE
-counter_original = Counter(y_train)
-print(counter_original)
-
-
-# oversampling the dataset
-
-oversample = SMOTE(sampling_strategy=0.35)
-x_over, y_over = oversample.fit_resample(x_train, y_train)
-x_train, y_train = x_over, y_over
-
-counter = Counter(y_train)
-print(counter)
 
 """**Test data**"""
 

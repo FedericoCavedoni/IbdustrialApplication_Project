@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 TIMESTAMPS_FILE_NAME = "heart_beat_timestamps"
 RR_FILE_NAME = "heart_beat_rr"
-SESSION_DURATION = 60 # Il vettore timeseries conterrà 60 secondi di samples
+SESSION_DURATION = 10 # Il vettore timeseries conterrà 60 secondi di samples
 MAX_MISSING_SAMPE_FOR_SESSION = 5
 PROF_TEST = True
 
@@ -15,6 +15,7 @@ class HeartBeatAnalysis:
         self.rr_intervals = []
         self.missing_samples = 0
         self.temp_rr_intervals = []
+        self.features : dict = {}
 
     # https://github.com/sam-luby/ECG-Pi/blob/master/ecg/pan_tomp.py#L112
     def compute_rr_intervals(self):
@@ -24,26 +25,31 @@ class HeartBeatAnalysis:
             diff = self.timeseries[i + 1] - self.timeseries[i]
             self.rr_intervals.append(diff)
 
-    def get_average_rrintervals(self):
-        """ ritorna la media degli rr_intervals """
-        return np.average(self.temp_rr_intervals)
-
     def get_session_duration(self):
         """ calcola la durata della sessione di campionamento attuale """
-        return sum(self.temp_rr_intervals)
+        return sum(self.rr_intervals)
     
     def session_duration_reached(self) -> bool :
         """ if the in the session has been sampled "#SESSION_DURATION second-samples", then returns True, else False """
         return ( self.get_session_duration() >= SESSION_DURATION )
-    
-    def copy__rr_intervals__in__temp_rr_intervals(self):
-        """ copy the rr_interval in temp_rr_intervals """
-        self.temp_rr_intervals = self.rr_intervals.copy()
 
     def empty_arrays(self):
         """ reset(WITHOUT CHANGING THE REFEENCED OBJECTS) the two arrays. You must NOT do -> self.timeseries[] = [] """
         self.timeseries[:] = []
         self.rr_intervals[:] = []
+
+    def copy__rr_intervals__in__temp_rr_intervals(self):
+        """ copy the rr_interval in temp_rr_intervals """
+        self.temp_rr_intervals = self.rr_intervals.copy()
+        self.features["rr_inetrvals"] = (',').join(map(str,self.temp_rr_intervals))
+
+    def get_average_temp_rrintervals(self):
+        """ ritorna la media degli rr_intervals """
+        return np.average(self.temp_rr_intervals)
+    
+    def get_duration_temp_rrintervals(self):
+        """ ritorna la media degli rr_intervals """
+        return np.average(self.temp_rr_intervals)
 
     def write_timeseries(self):
         """ write in .csvFile the timeseries """
@@ -61,15 +67,15 @@ class HeartBeatAnalysis:
 
     def compute_bpm(self):
         """ return the bmp """
-        _session_duration = self.get_session_duration()
-        bpm = ( ( _session_duration / self.get_average_rrintervals() )
+        _session_duration = self.get_duration_temp_rrintervals()
+        bpm = ( ( _session_duration / self.get_average_temp_rrintervals() )
                *
                ( 60 / _session_duration ) )
         print("bpm(): " + str(bpm))
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("bpm(): " + str(bpm) + "\n")
-        return bpm
+        self.features["bpm"] = bpm
 
     def compute_rmssd(self):
         """ calculate the RootMeanSquareSuccessiveDifferences (root mean square of successive differences) """
@@ -81,7 +87,7 @@ class HeartBeatAnalysis:
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_rmssd(): " + str(rmssd) + "\n")
-        return rmssd
+        self.features["rmssd"] = (',').join(map(str, rmssd))
     
     def compute_standard_deviation(self):
         """ return the Standard Deviation of RR_intervals"""
@@ -90,7 +96,7 @@ class HeartBeatAnalysis:
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_standard_deviation(): " + str(sd) + "\n")
-        return sd
+        self.features["sd"] = sd
     
     def compute_pnn(self, _x_milliseconds = 50):
         """ return the number of successive intervals that distance more than _x millisecond"""
@@ -99,13 +105,13 @@ class HeartBeatAnalysis:
         for i in range(_len - 1):
             if (self.temp_rr_intervals[i + 1] - self.temp_rr_intervals[i]) > _x_milliseconds:
                 NNx += 1
-        pNNx = NNx / _len
+        pNNx = NNx / ( _len if _len != 0 else 1)
         print("compute_nn(): " + str(NNx) + " Percentage: " + str(pNNx))
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_nn(): " + str(NNx) + "\n")
                 file.write("Percentage(): " + str(pNNx) + "\n")
-        return pNNx
+        self.features["pNN"] = pNNx
 
 
     def count_missing_sample(self) :

@@ -18,7 +18,7 @@ class CommunicationAPI():
     def setup_routes(self):
         """ Defines routes for the Flask application """
 
-        @self.app.route('/receive_sample_result', methods=['POST'])
+        @self.app.route('/receive_json', methods=['POST'])
         def receive_sample_result():
             """ Handles the incoming JSON messages"""
             if self.json_handler:
@@ -39,10 +39,10 @@ class CommunicationAPI():
             return send_file("./heart_beat_rr_60.csv", as_attachment=True, attachment_filename="heart_beat_rr_60.csv")
         
 
-    def send_sample(self, target_ip, target_port, json_data):
+    def send_json(self, target_ip, target_port, json_data):
         """ Sends a JSON to the specified system """
         try:
-            requests.post("http://{}:{}/receive_sample".format(target_ip, target_port), json=json_data, timeout=30)
+            requests.post("http://{}:{}/receive_json".format(target_ip, target_port), json=json_data, timeout=30)
         except requests.RequestException as e:
             print("[CommunicationAPI] Send JSON failed: {}".format(e))
 
