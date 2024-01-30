@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO
 from sensor_driver import HRDriver
 from communication_API import CommunicationAPI
 from heart_beat_analysis import HeartBeatAnalysis
+from neural_network import NeuralNetwork
 
 GPIO_LED = 17
 GPIO_HR = 4
@@ -12,6 +13,7 @@ timeseries_lock = threading.Lock()
 hr_driver = HRDriver(GPIO_HR)
 hba = HeartBeatAnalysis()
 comm_api : CommunicationAPI = None
+knn = NeuralNetwork()
 
 def setup():
     """ setup function """
@@ -24,37 +26,32 @@ def loop():
     #old_sample = 0
     while True:
         Time.sleep(1)
-        
+        # Ho campionato per 60s
         print("Numero campioni: " + str(len(hba.timeseries)))
         hba.compute_rr_intervals()
         if(hba.session_duration_reached()):
-            hba.write_rrintervals()
-            
+            hba.copy__rr_intervals__in__temp_rr_intervals()
             with timeseries_lock:
-                print("Distrutto")
-                hba.deastroy_timeseries()
-            # Qui va distrutto il vecchio contneuto: chiedi a chat come gestisco in modo corretto un array che viene modificato sia da un interrupt_handler che dal main?
-        
+                print("Svuotatao")
+                hba.empty_arrays()
+            # Features compuation
+            hba.write_rrintervals()
+            _bpm = hba.compute_bpm()
+            _rmssd = hba.compute_rmssd()
+            _sd = hba.compute_standard_deviation()
+            _pnn50 = hba.compute_pnn()
+            knn.construct_array_features(bpm = _bpm,
+                                         rr_interval = hba.temp_rr_intervals,
+                                         rmssd = _rmssd,
+                                         sdnn = _sd,
+                                         pnn50 = _pnn50)
+            
 
-        """
-            sample = hr_driver.read_sample()
-            if( (sample == GPIO.HIGH) and (old_sample != sample )): # if there is a new beat...
-                heart_beat_timestamp = Time.time()
-                hba.timeseries.append(heart_beat_timestamp)
-                if(hba.t_differences_reached()): # Se ho raccolto un campionamento di 60 secondi
-                    hba.compute_timeseries_intervals()
-                    
-
-
-                with open(TIMESTAMPS_FILE_NAME + '.csv', 'a') as file:
-                    file.write(str(heart_beat_timestamp) + ',' + '\n')
-                print("Battito")
-                GPIO.output(GPIO_LED, GPIO.HIGH)
-                Time.sleep(1)
-
-            old_sample = sample
-            GPIO.output(GPIO_LED, GPIO.LOW)
-        """
+            prediction_value = knn.get_prediction()
+            print("Predict_value = " + str(prediction_value))
+            
+            
+            
 
 def setup_gpio_pins():
     """ funzione di delegazione del setup. Il 'main' resta pulito """
