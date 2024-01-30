@@ -29,7 +29,6 @@ class HRDriver:
     def _default_ISR(self, channel):
         """ default Interrupt Service Routine per il sampling """
         timestamp = Time.time()
-        print("_default_ISR()" + str(timestamp))
         with self.timeseries_lock:
             if(self.timeseries is not None):
                 self.timeseries.append(timestamp)
