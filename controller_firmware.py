@@ -32,7 +32,7 @@ def loop():
         # Ho campionato per 60s
         print("Numero campioni: " + str(len(hba.timeseries)))
         hba.compute_rr_intervals()
-        if(hba.session_duration_reached()):
+        if hba.session_duration_reached() :
             hba.copy__rr_intervals__in__temp_rr_intervals()
             with timeseries_lock:
                 print("Svuotatao")

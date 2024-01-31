@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, send_file
-import requests
+import requests, json
 
 class CommunicationAPI():
     """
@@ -22,7 +22,8 @@ class CommunicationAPI():
         def receive_sample_result():
             """ Handles the incoming JSON messages"""
             if self.json_handler:
-                json_data = request.json
+                str_json_data = request.json
+                json_data = json.loads(str_json_data)
                 self.json_handler(json_data)
                 return jsonify({'message': 'json received', "success": True}), 200
             else:

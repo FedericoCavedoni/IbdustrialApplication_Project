@@ -3,13 +3,15 @@ import numpy as np
 import heartpy as hp
 import math
 import joblib
-import random
+import random, warnings
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 annotations_train = ['gamer1-annotations.csv', 'gamer2-annotations.csv', 'gamer3-annotations.csv', 'gamer4-annotations.csv']
 ppg_train = ['gamer1-ppg-2000-01-01.csv', 'gamer1-ppg-2000-01-02.csv','gamer2-ppg-2000-01-01.csv', 'gamer2-ppg-2000-01-02.csv','gamer3-ppg-2000-01-01.csv', 'gamer3-ppg-2000-01-02.csv', 'gamer4-ppg-2000-01-01.csv', 'gamer4-ppg-2000-01-02.csv']
 
@@ -35,6 +37,8 @@ def pick_features(all_measures, selected):
             value = all_measures[cat][i]
             row.append(remove_nan(value))
         x_train.append(row)
+
+    #print("X_train[10:11] = " + str(x_train[10:11]))
     return x_train
 
 # if value is NaN return 0 else returns value

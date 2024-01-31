@@ -41,7 +41,7 @@ class HeartBeatAnalysis:
     def copy__rr_intervals__in__temp_rr_intervals(self):
         """ copy the rr_interval in temp_rr_intervals """
         self.temp_rr_intervals = self.rr_intervals.copy()
-        self.features["rr_inetrvals"] = (',').join(map(str,self.temp_rr_intervals))
+        self.features["rr_intervals"] = (',').join(map(str,self.temp_rr_intervals))
 
     def get_average_temp_rrintervals(self):
         """ ritorna la media degli rr_intervals """
@@ -78,16 +78,17 @@ class HeartBeatAnalysis:
         self.features["bpm"] = bpm
 
     def compute_rmssd(self):
-        """ calculate the RootMeanSquareSuccessiveDifferences (root mean square of successive differences) """
+        """ calculate the RootMeanSquareSuccessiveDifferences RMSSD"""
         differences = np.diff(self.temp_rr_intervals)
         squared_differences = differences ** 2
-        mean_squared_differences = squared_differences / (len(differences) - 1 )
-        rmssd = np.sqrt(mean_squared_differences)
+        _sum = sum(squared_differences)
+        intermediate_value = _sum / (len(differences) - 1 )
+        rmssd = np.sqrt(intermediate_value)
         print("compute_rmssd(): " + str(rmssd))
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_rmssd(): " + str(rmssd) + "\n")
-        self.features["rmssd"] = (',').join(map(str, rmssd))
+        self.features["rmssd"] = (rmssd * 100)
     
     def compute_standard_deviation(self):
         """ return the Standard Deviation of RR_intervals"""
@@ -96,14 +97,14 @@ class HeartBeatAnalysis:
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_standard_deviation(): " + str(sd) + "\n")
-        self.features["sd"] = sd
+        self.features["sd"] = (sd * 100)
     
     def compute_pnn(self, _x_milliseconds = 50):
         """ return the number of successive intervals that distance more than _x millisecond"""
         _len = len(self.temp_rr_intervals)
         NNx = 0
         for i in range(_len - 1):
-            if (self.temp_rr_intervals[i + 1] - self.temp_rr_intervals[i]) > _x_milliseconds:
+            if (self.temp_rr_intervals[i + 1] - self.temp_rr_intervals[i]) > (_x_milliseconds/1000):
                 NNx += 1
         pNNx = NNx / ( _len if _len != 0 else 1)
         print("compute_nn(): " + str(NNx) + " Percentage: " + str(pNNx))
