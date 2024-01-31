@@ -53,7 +53,7 @@ class ThreadReceiver(CommunicationAPI):
         working_data, measures = self.process_ppg(data)
         #['bpm', 'ibi', 'rmssd', 'sdnn', 'pnn50']
         print("DATI CON DROW 7 -> bpm = " + str(measures["bpm"]) + " , rmssd = " 
-              + str(measures["rmssd"]) + " ,sd " + str(measures["rmssd"]) +
+              + str(measures["rmssd"]) + " ,sd " + str(measures["sdnn"]) +
               " ,pnn50 = " + str(measures["pnn50"]) + ", ibi: " + str(measures["ibi"]))
 
         features = self.from_values_to_features(measures["bpm"][0], measures["ibi"][0], measures["rmssd"][0], measures["sdnn"][0], measures["pnn50"][0])

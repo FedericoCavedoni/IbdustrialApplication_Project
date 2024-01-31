@@ -88,7 +88,7 @@ class HeartBeatAnalysis:
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_rmssd(): " + str(rmssd) + "\n")
-        self.features["rmssd"] = (rmssd * 100)
+        self.features["rmssd"] = (rmssd * 1000)
     
     def compute_standard_deviation(self):
         """ return the Standard Deviation of RR_intervals"""
@@ -97,7 +97,7 @@ class HeartBeatAnalysis:
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_standard_deviation(): " + str(sd) + "\n")
-        self.features["sd"] = (sd * 100)
+        self.features["sd"] = (sd * 1000)
     
     def compute_pnn(self, _x_milliseconds = 50):
         """ return the number of successive intervals that distance more than _x millisecond"""
