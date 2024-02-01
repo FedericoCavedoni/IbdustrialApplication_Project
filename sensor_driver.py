@@ -7,22 +7,21 @@ class HRDriver:
     def __init__(self, gpio_pin):
         self._gpio_pin = gpio_pin
         self.timeseries : [] = None
-        self.timeseries_lock : threading.Lock = None
-        self.new_beat_reeived = None
+        self.shared_timestamp = None
+        self.wake_condition : threading.Condition = None
 
-    def setup(self, new_beat_reeived : threading.Condition):
+    def setup(self):
         """ sensor driver setup """
         GPIO.setup(self._gpio_pin, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)  # Attivo la resistenza interna di PullDown
-        self.new_beat_reeived = new_beat_reeived
 
     def read_sample(self):
         """ ritorna il valore digitale letto dal gpio_pin. DA USARE SOLO IN MODALITA' POLLING """
         return GPIO.digitalRead(self._gpio_pin)
     
-    def set_interrupt_mode(self, timeseries : [] , timeseries_lock, gpio_event = GPIO.RISING, interrupt_handler = None):
+    def set_interrupt_mode(self, shared_timestamp, wake_condition, gpio_event = GPIO.RISING, interrupt_handler = None):
         """ la funzione abilita la modalità di gestione ad Interrupt per il sampling """
-        self.timeseries = timeseries
-        self.timeseries_lock = timeseries_lock
+        self.shared_timestamp = shared_timestamp
+        self.wake_condition = wake_condition
         GPIO.add_event_detect(self._gpio_pin,
                               gpio_event,
                               callback = self._default_ISR if (interrupt_handler is None) else interrupt_handler,
@@ -31,10 +30,6 @@ class HRDriver:
     def _default_ISR(self, channel):
         """ default Interrupt Service Routine per il sampling """
         timestamp = Time.time()
-        with self.timeseries_lock:
-            if(self.timeseries is not None):
-                self.timeseries.append(timestamp)
-                with self.new_beat_reeived:
-                    self.new_beat_reeived.notify()
-            else:
-                print("_default_ISR FALSE")
+        self.shared_timestamp[0] = timestamp
+        with self.wake_condition:
+            self.wake_condition.notify()
