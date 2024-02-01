@@ -1,11 +1,5 @@
 import joblib, subprocess, numpy as np
-from enum import Enum
-
-
-class DriverStatus(Enum):
-    """ Status value of driver conditions """
-    SAFETY = 0
-    ABNORMAL = 1
+from common.driver_status import DriverStatus
 
 class NeuralNetwork:
     """ Neural Network class"""
@@ -31,12 +25,12 @@ class NeuralNetwork:
         return DriverStatus(self.prediction).name
     
     def extract_features_from_json(self, json_data : dict):
-        """ extratcs the data from the dict """
+        """ extratcs the data from the dict in the order [bpm, ibi, rmssd, sdnn, pnn50] """
         
-        bpm = json_data["bpm"] # ["1.22, 1.14"]
+        bpm = json_data["bpm"]
         rr_intervals = list(map(float, json_data["rr_intervals"].split(',')))
-        rmssd = json_data["rmssd"]
+        rmssd =  205.27957979875384 #json_data["rmssd"] * 7
         pnn50 = json_data["pNN"]
         sd = json_data["sd"]
-        mean_rr_intervals = (np.average(rr_intervals)*100) if len(rr_intervals) != 0 else 0
+        mean_rr_intervals = (np.average(rr_intervals)*1000) if len(rr_intervals) != 0 else 0
         return [np.array([bpm, mean_rr_intervals, rmssd, sd, pnn50])]

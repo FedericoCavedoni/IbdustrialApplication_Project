@@ -2,9 +2,10 @@ import threading, json
 import time as Time
 import RPi.GPIO as GPIO
 from sensor_driver import HRDriver
-from communication_API import CommunicationAPI
+from common.communication_API import CommunicationAPI
+from common.driver_status import DriverStatus
 from heart_beat_analysis import HeartBeatAnalysis
-from neural_network import NeuralNetwork
+from heart_beat_analysis import MAX_INTERVAL_BETWEEN_BEATS
 
 GPIO_LED = 17
 GPIO_HR = 4
@@ -12,6 +13,7 @@ PC_IP = "192.168.1.181"
 PC_PORT = 5556
 
 timeseries_lock = threading.Lock()
+new_beat_reeived = threading.Condition()
 hr_driver = HRDriver(GPIO_HR)
 hba = HeartBeatAnalysis()
 comm_api : CommunicationAPI = None
@@ -28,9 +30,17 @@ def loop():
     #sample = 0
     #old_sample = 0
     while True:
-        Time.sleep(1)
-        # Ho campionato per 60s
+        wait_for_new_beat()
         print("Numero campioni: " + str(len(hba.timeseries)))
+        if(len(hba.timeseries) >= 2): 
+            beat_interval = hba.timeseries[-1] - hba.timeseries[-2]
+            if(beat_interval >= MAX_INTERVAL_BETWEEN_BEATS):
+                led_on()
+                with timeseries_lock:
+                    print("INVALID SESSION")
+                    hba.empty_arrays()
+                continue
+        led_off()
         hba.compute_rr_intervals()
         if hba.session_duration_reached() :
             hba.copy__rr_intervals__in__temp_rr_intervals()
@@ -38,7 +48,7 @@ def loop():
                 print("Svuotatao")
                 hba.empty_arrays()
             # Features compuation
-            hba.write_rrintervals()
+            #hba.write_rrintervals()
 
             hba.compute_bpm()
             hba.compute_rmssd()
@@ -60,7 +70,8 @@ def setup_gpio_pins():
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     GPIO.setup(GPIO_LED, GPIO.OUT)
-    hr_driver.setup()
+    led_off()
+    hr_driver.setup(new_beat_reeived)
     hr_driver.set_interrupt_mode(timeseries = hba.timeseries,
                                  timeseries_lock = timeseries_lock,
                                  gpio_event = GPIO.RISING)
@@ -69,20 +80,29 @@ def setup_communicationAPI():
     """ setup delle API """
     global comm_api
     comm_api = CommunicationAPI(
-        json_handler = receive_sample_result,
-        threshold_reached_handler = send_new_record)
+        json_handler = receive_sample_result)
     flask_thread = threading.Thread(target=comm_api.run)
     flask_thread.start()
 
+def led_on():
+    GPIO.output(GPIO_LED, GPIO.HIGH)
+
+def led_off():
+    GPIO.output(GPIO_LED, GPIO.LOW)
+
 def receive_sample_result(json_data):
     """ Handler Classification Result """
-    print("Classificazione battito ricevuta")
+    print("Classificazione battito ricevuta ->" + str(json_data))
+    prediction : DriverStatus = json_data["prediction"]
+    write_log(prediction)
 
-def send_new_record():
-    """ Simula il raggiungimento della soglia per l'invio dei sample"""
-    print("Comando threshold ricevuto")
+def write_log(prediction : DriverStatus):
+    hba.write_features(prediction = prediction)
 
 
+def wait_for_new_beat():
+    with new_beat_reeived:
+        new_beat_reeived.wait()
 
 
 setup()

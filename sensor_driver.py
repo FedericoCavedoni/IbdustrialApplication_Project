@@ -8,10 +8,12 @@ class HRDriver:
         self._gpio_pin = gpio_pin
         self.timeseries : [] = None
         self.timeseries_lock : threading.Lock = None
+        self.new_beat_reeived = None
 
-    def setup(self):
+    def setup(self, new_beat_reeived : threading.Condition):
         """ sensor driver setup """
         GPIO.setup(self._gpio_pin, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)  # Attivo la resistenza interna di PullDown
+        self.new_beat_reeived = new_beat_reeived
 
     def read_sample(self):
         """ ritorna il valore digitale letto dal gpio_pin. DA USARE SOLO IN MODALITA' POLLING """
@@ -32,5 +34,7 @@ class HRDriver:
         with self.timeseries_lock:
             if(self.timeseries is not None):
                 self.timeseries.append(timestamp)
+                with self.new_beat_reeived:
+                    self.new_beat_reeived.notify()
             else:
                 print("_default_ISR FALSE")

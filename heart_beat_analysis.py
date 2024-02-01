@@ -1,10 +1,13 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
+from datetime import datetime
 
 TIMESTAMPS_FILE_NAME = "heart_beat_timestamps"
-RR_FILE_NAME = "heart_beat_rr"
-SESSION_DURATION = 10 # Il vettore timeseries conterrà 60 secondi di samples
-MAX_MISSING_SAMPE_FOR_SESSION = 5
+FEATURES_DIRECTORY = "driver_status"
+SESSION_DURATION = 10 # This is the duration of the session that will be classified
+MAX_INTERVAL_BETWEEN_BEATS = 1200 # This is the maximum interval (mS) between two consecutive beats. Above that, there was a missing sample
 PROF_TEST = True
 
 class HeartBeatAnalysis:
@@ -50,20 +53,6 @@ class HeartBeatAnalysis:
     def get_duration_temp_rrintervals(self):
         """ ritorna la media degli rr_intervals """
         return np.average(self.temp_rr_intervals)
-
-    def write_timeseries(self):
-        """ write in .csvFile the timeseries """
-        with open(TIMESTAMPS_FILE_NAME + '_' + str(SESSION_DURATION) + '.csv', 'a') as file:
-            _len = len(self.timeseries) - 1
-            for i, timestamp in enumerate(self.timeseries):
-                file.write(str(timestamp) + (',' if i != _len else ''))
-
-    def write_rrintervals(self):
-        """ write in .csvFile the rr_intervals """
-        with open(RR_FILE_NAME + '_' + str(SESSION_DURATION) + '.csv', 'a') as file:
-            _len = len(self.temp_rr_intervals) - 1
-            for i, temp_rr_interval in enumerate(self.temp_rr_intervals):
-                file.write(str(temp_rr_interval) + (',' if i != _len else '\n'))
 
     def compute_bpm(self):
         """ return the bmp """
@@ -113,8 +102,44 @@ class HeartBeatAnalysis:
                 file.write("compute_nn(): " + str(NNx) + "\n")
                 file.write("Percentage(): " + str(pNNx) + "\n")
         self.features["pNN"] = pNNx
+    
+    def write_timeseries(self):
+        """ write in .csvFile the timeseries """
+        with open(TIMESTAMPS_FILE_NAME + '_' + str(SESSION_DURATION) + '.csv', 'a') as file:
+            _len = len(self.timeseries) - 1
+            for i, timestamp in enumerate(self.timeseries):
+                file.write(str(timestamp) + (',' if i != _len else ''))
 
+    def write_rrintervals(self):
+        """ write in .csvFile the rr_intervals """
+        with open(RR_FILE_NAME + '_' + str(SESSION_DURATION) + '.csv', 'a') as file:
+            _len = len(self.temp_rr_intervals) - 1
+            for i, temp_rr_interval in enumerate(self.temp_rr_intervals):
+                file.write(str(temp_rr_interval) + (',' if i != _len else '\n'))
 
-    def count_missing_sample(self) :
-        print("DA DEFINIRE")
-        return
+    def write_features(self, prediction):
+        """ This function handle the log-features creation for the driver status condition.
+            Creates a new CSV file for each hour in which stores the predictioned status for that sampling hour """
+        folder_features_path = Path(FEATURES_DIRECTORY)
+        if not folder_features_path.is_dir():
+            os.makedirs(folder_features_path)
+
+        current_time = datetime.now()
+        formatted_time = current_time.strftime("%m-%d-%Y,%H") #driver_status/01-02-2024,10.csv
+        time_features_name = FEATURES_DIRECTORY + "/" + formatted_time +'.csv' # EXAMPLE -> driver_status/01-02-2024,10:54.csv
+        time_features_path = Path(time_features_name)
+        if not time_features_path.is_file():
+            print("Non esiste la cartella -> " + time_features_name)
+            with open(time_features_name, 'a') as file:
+                 file.write("HOUR:MINUTE, FEATURES[bpm, mean_rr, rmssd, sdnn, pnn50], PREDICTION\n")
+        hour_minute = current_time.strftime("%H:%M") #10:02
+        line = str(hour_minute) + ', ' +\
+            str(self.features["bpm"]) + ',' +\
+            str(self.get_average_temp_rrintervals()) + ',' +\
+            str(self.features["rmssd"]) + ',' +\
+            str(self.features["sd"]) + ',' +\
+            str(self.features["pNN"]) + ', ' +\
+            str(prediction)
+        with open(time_features_name, 'a') as file:
+            file.write(line + '\n')
+        
