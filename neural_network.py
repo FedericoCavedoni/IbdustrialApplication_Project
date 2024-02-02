@@ -29,7 +29,7 @@ class NeuralNetwork:
         
         bpm = json_data["bpm"]
         rr_intervals = list(map(float, json_data["rr_intervals"].split(',')))
-        rmssd =  205.27957979875384 #json_data["rmssd"] * 7
+        rmssd = json_data["rmssd"]
         pnn50 = json_data["pNN"]
         sd = json_data["sd"]
         mean_rr_intervals = (np.average(rr_intervals)*1000) if len(rr_intervals) != 0 else 0

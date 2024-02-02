@@ -23,7 +23,7 @@ class CommunicationAPI():
                 str_json_data = request.json
                 json_data = json.loads(str_json_data)
                 self.json_handler(json_data)
-                return jsonify({'message': 'json received', "success": True}), 200
+                return "" #jsonify({'message': 'json received', "success": True}), 200
             else:
                 return jsonify({'message': 'json handler not defined', "success": False}), 501
         

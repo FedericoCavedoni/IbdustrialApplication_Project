@@ -50,11 +50,12 @@ class HeartBeatAnalysis:
         bpm = ( ( _session_duration / self.get_average_rrintervals() )
                *
                ( 60 / _session_duration ) )
-        print("bpm(): " + str(bpm))
+        self.features["bpm"] = bpm
+        print("BPM: " + str(self.features["bpm"]))
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("bpm(): " + str(bpm) + "\n")
-        self.features["bpm"] = bpm
+        
 
     def compute_rmssd(self):
         """ calculate the RootMeanSquareSuccessiveDifferences RMSSD"""
@@ -63,20 +64,22 @@ class HeartBeatAnalysis:
         _sum = sum(squared_differences)
         intermediate_value = _sum / (len(differences) - 1 )
         rmssd = np.sqrt(intermediate_value)
-        print("compute_rmssd(): " + str(rmssd))
+        self.features["rmssd"] = (rmssd * 1000)
+        print("RMSSD: " + str(self.features["rmssd"]))
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_rmssd(): " + str(rmssd) + "\n")
-        self.features["rmssd"] = (rmssd * 1000)
+        
     
     def compute_standard_deviation(self):
         """ return the Standard Deviation of RR_intervals"""
         sd = np.std(self.rr_intervals)
-        print("compute_sdrr(): " + str(sd))
+        self.features["sd"] = (sd * 1000)
+        print("SDRR: " + str(self.features["sd"]))
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_standard_deviation(): " + str(sd) + "\n")
-        self.features["sd"] = (sd * 1000)
+        
     
     def compute_pnn(self, _x_milliseconds = 50):
         """ return the number of successive intervals that distance more than _x millisecond"""
@@ -86,12 +89,13 @@ class HeartBeatAnalysis:
             if (self.rr_intervals[i + 1] - self.rr_intervals[i]) > (_x_milliseconds/1000):
                 NNx += 1
         pNNx = NNx / ( _len if _len != 0 else 1)
-        print("compute_nn(): " + str(NNx) + " Percentage: " + str(pNNx))
+        self.features["pNN"] = pNNx
+        print("%NN" + str(_x_milliseconds) + ": " + str(self.features["pNN"]))
         if(PROF_TEST):
             with open('statistics.csv', 'a') as file:
                 file.write("compute_nn(): " + str(NNx) + "\n")
                 file.write("Percentage(): " + str(pNNx) + "\n")
-        self.features["pNN"] = pNNx
+        
 
     def write_features(self, prediction):
         """ This function handle the log-features creation for the driver status condition.
