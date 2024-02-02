@@ -27,7 +27,8 @@ def loop():
     global comm_api
     global hba
     while True:
-        wait_for_new_beat() 
+        # Il nostro Sporadic task ha un MinimumInterrivalTime, ossia ~272mS.
+        wait_for_new_beat()
         hba.timeseries.append(shared_timestamp[0]) # --> As soon as this threas is waked-up, we read the shared variable
         print(".")
         if(len(hba.timeseries) >= 2):
@@ -48,12 +49,9 @@ def loop():
             comm_api.send_json(PC_IP, PC_PORT, json_data = json.dumps(hba.features))
 
             hba.empty_arrays()
-            print("\n") 
+            print("\n")
 
-            #prediction_value = knn.get_prediction()
-            #print("Predict_value = " + str(prediction_value))
-            
-            
+
 def setup_gpio_pins():
     """ funzione di delegazione del setup. Il 'main' resta pulito """
     print("Setup GPIO pins")
@@ -82,12 +80,11 @@ def receive_sample_result(json_data):
     write_log(prediction)
 
 def write_log(prediction : DriverStatus):
+    """ write log on permanent memory (SD) """
     hba.write_features(prediction = prediction)
-"""
-    TO_DO: 
-        -] VERIFICARE SE LA DEADLINE E' STATA MANCATA
-"""
+
 def wait_for_new_beat():
+    """ this function blocks on that Condition the thread that invokes it """
     with new_beat_reeived:
         new_beat_reeived.wait()
 

@@ -34,14 +34,18 @@ class HRDriver:
         GPIO.add_event_detect(self._gpio_pin,
                               gpio_event,
                               callback = self._default_ISR if (interrupt_handler is None) else interrupt_handler,
-                              bouncetime=300) # 300 è l'interrivalTime (sovra-stimato) fra 2 battiti consecutivi, ipotizzando un bpm massimo di 220.
-    
+                              bouncetime = 270) # 270 è l'interrivalTime (sovra-stimato) fra 2 battiti consecutivi, ipotizzando un bpm massimo di 220.
+
     def _default_ISR(self, channel):
         """ default Interrupt Service Routine per il sampling """
         timestamp = Time.time()
         self.shared_timestamp[0] = timestamp
         with self.wake_condition:
             self.wake_condition.notify()
+        comp_time = Time.time() - timestamp
+        print("ComputTime_ISR: " + str(comp_time))
+        with open('CompISR.csv', 'a') as file:
+            file.write("bpm(): " + str(comp_time) + "\n")
 
     def led_on(self):
         "Turn on the led"
