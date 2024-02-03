@@ -16,7 +16,9 @@ class HRDriver:
     def setup(self):
         """ sensor driver setup """
         GPIO.setmode(GPIO.BCM)
+
         GPIO.setup(self._gpio_pin, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)  # Attivo la resistenza interna di PullDown
+        
         GPIO.setwarnings(False)
         GPIO.setup(self._gpio_pin_led, GPIO.OUT)
         self.blinking_condition = threading.Condition()
@@ -31,10 +33,11 @@ class HRDriver:
         """ la funzione abilita la modalità di gestione ad Interrupt per il sampling """
         self.shared_timestamp = shared_timestamp
         self.wake_condition = wake_condition
+
         GPIO.add_event_detect(self._gpio_pin,
                               gpio_event,
                               callback = self._default_ISR if (interrupt_handler is None) else interrupt_handler,
-                              bouncetime = 270) # 270 è l'interrivalTime (sovra-stimato) fra 2 battiti consecutivi, ipotizzando un bpm massimo di 220.
+                              bouncetime = 260) # The real MinimumInterrivalTime is 270mS -> equivalent to 220BPM.
 
     def _default_ISR(self, channel):
         """ default Interrupt Service Routine per il sampling """
