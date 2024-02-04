@@ -7,7 +7,7 @@ from datetime import datetime
 TIMESTAMPS_FILE_NAME = "heart_beat_timestamps"
 FEATURES_DIRECTORY = "driver_status"
 SESSION_DURATION = 10 # This is the duration of the session that will be classified
-MAX_INTERVAL_BETWEEN_BEATS = 1200 # This is the maximum interval (mS) between two consecutive beats. Above that, there was a missing sample
+MAX_INTERVAL_BETWEEN_BEATS = 1.2 # This is the maximum interval (S) between two consecutive beats. Above that, there was a missing sample
 
 class HeartBeatAnalysis:
     """ Class for the Study of the Heart-beat and the computation of the HRV Scores """

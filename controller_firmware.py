@@ -33,19 +33,16 @@ def loop():
     global time2
     while True:
         # Il nostro Sporadic task ha un MinimumInterrivalTime, ossia ~272mS.
-        if ((time2 - time1) * 1000) > 270:
+        if (time2 - time1) > 0.270: # 0.270S
             print("Deadline mancata")
-        wait_for_new_beat()
+        if not wait_for_new_beat() :    # if not... means that there is no hands on the steering wheel
+            print("Please, take hands on the Steering Wheel!")
+            hba.empty_arrays()
+            hr_driver.blink()
+            continue
         time1 = Time.time()
         hba.timeseries.append(shared_timestamp[0]) # --> As soon as this threas is waked-up, we read the shared variable
         print(".")
-        if(len(hba.timeseries) >= 2):
-            beat_interval = hba.timeseries[-1] - hba.timeseries[-2]
-            if((beat_interval * 1000) >= MAX_INTERVAL_BETWEEN_BEATS):
-                print("Please, take hands on the Steering Wheel!")
-                hba.empty_arrays()
-                hr_driver.blink()
-                continue
         hba.compute_rr_intervals()
         if hba.session_duration_reached() :
             # Features compuation
@@ -95,7 +92,7 @@ def write_log(prediction : DriverStatus):
 def wait_for_new_beat():
     """ this function blocks on that Condition the thread that invokes it """
     with new_beat_reeived:
-        new_beat_reeived.wait()
+        return new_beat_reeived.wait(MAX_INTERVAL_BETWEEN_BEATS)
 
 
 setup()
