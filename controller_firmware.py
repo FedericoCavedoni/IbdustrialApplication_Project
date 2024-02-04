@@ -17,6 +17,9 @@ hba = HeartBeatAnalysis()
 comm_api : CommunicationAPI = None
 shared_timestamp = [0]
 
+time1 = 0
+time2 = 0
+
 def setup():
     """ setup function """
     setup_gpio_pins()
@@ -26,9 +29,14 @@ def loop():
     """ loop function """
     global comm_api
     global hba
+    global time1
+    global time2
     while True:
         # Il nostro Sporadic task ha un MinimumInterrivalTime, ossia ~272mS.
+        if ((time2 - time1) * 1000) > 270:
+            print("Deadline mancata")
         wait_for_new_beat()
+        time1 = Time.time()
         hba.timeseries.append(shared_timestamp[0]) # --> As soon as this threas is waked-up, we read the shared variable
         print(".")
         if(len(hba.timeseries) >= 2):
@@ -50,6 +58,7 @@ def loop():
 
             hba.empty_arrays()
             print("\n")
+        time2 = Time.time()
 
 
 def setup_gpio_pins():

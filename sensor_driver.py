@@ -40,15 +40,15 @@ class HRDriver:
                               bouncetime = 260) # The real MinimumInterrivalTime is 270mS -> equivalent to 220BPM.
 
     def _default_ISR(self, channel):
-        """ default Interrupt Service Routine per il sampling """
-        timestamp = Time.time()
-        self.shared_timestamp[0] = timestamp
+        """ default Interrupt Service Routine per il sampling. It's body must be short as much as possible. """
+        # timestamp = Time.time()                           ONLY FOR COMPUTATION TIME ANALYSIS
+        self.shared_timestamp[0] = Time.time()
         with self.wake_condition:
             self.wake_condition.notify()
-        comp_time = Time.time() - timestamp
-        print("ComputTime_ISR: " + str(comp_time))
-        with open('CompISR.csv', 'a') as file:
-            file.write("bpm(): " + str(comp_time) + "\n")
+        # comp_time = Time.time() - timestamp               ONLY FOR COMPUTATION TIME ANALYSIS
+        # print("ComputTime_ISR: " + str(comp_time))        ONLY FOR COMPUTATION TIME ANALYSIS
+        # with open('CompISR.csv', 'a') as file:            ONLY FOR COMPUTATION TIME ANALYSIS
+            # file.write("bpm(): " + str(comp_time) + "\n") ONLY FOR COMPUTATION TIME ANALYSIS
 
     def led_on(self):
         "Turn on the led"
