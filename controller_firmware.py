@@ -56,6 +56,9 @@ def loop():
             hba.empty_arrays()
             print("\n")
         time2 = Time.time()
+        with open('ComputationTime_MainThread.csv', 'a') as file:   # ONLY FOR COMPUTATION TIME ANALYSIS
+            file.write(str(time2 - time1) + "\n")       # ONLY FOR COMPUTATION TIME ANALYSIS
+        
 
 
 def setup_gpio_pins():

@@ -2,6 +2,8 @@ import time as Time
 import threading
 import RPi.GPIO as GPIO
 
+BLINKING_PERIOD = 0.3
+
 class HRDriver:
     """ class driver for the Heart Rate Sensor """
     def __init__(self, gpio_pin_hr, gpio_pin_led):
@@ -41,14 +43,12 @@ class HRDriver:
 
     def _default_ISR(self, channel):
         """ default Interrupt Service Routine per il sampling. It's body must be short as much as possible. """
-        # timestamp = Time.time()                           ONLY FOR COMPUTATION TIME ANALYSIS
         self.shared_timestamp[0] = Time.time()
         with self.wake_condition:
             self.wake_condition.notify()
-        # comp_time = Time.time() - timestamp               ONLY FOR COMPUTATION TIME ANALYSIS
-        # print("ComputTime_ISR: " + str(comp_time))        ONLY FOR COMPUTATION TIME ANALYSIS
-        # with open('CompISR.csv', 'a') as file:            ONLY FOR COMPUTATION TIME ANALYSIS
-            # file.write("bpm(): " + str(comp_time) + "\n") ONLY FOR COMPUTATION TIME ANALYSIS
+        comp_time = Time.time() - self.shared_timestamp[0] # ONLY FOR COMPUTATION TIME ANALYSIS
+        with open('ComputationTime_ISR.csv', 'a') as file:             # ONLY FOR COMPUTATION TIME ANALYSIS
+            file.write(str(comp_time) + "\n")  # ONLY FOR COMPUTATION TIME ANALYSIS
 
     def led_on(self):
         "Turn on the led"
@@ -71,7 +71,7 @@ class HRDriver:
             _blink_number = 5
             while _blink_number > 0 :
                 self.led_on()
-                Time.sleep(0.4)
+                Time.sleep(BLINKING_PERIOD)
                 self.led_off()
-                Time.sleep(0.4)
+                Time.sleep(BLINKING_PERIOD)
                 _blink_number -= 1
